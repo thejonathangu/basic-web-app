@@ -36,5 +36,36 @@ export default function QueryProcessor(query: string): string {
     }
     return String(max);
   }
-  return ""
+
+  // Handle simple addition queries like:
+  // "What is 34 plus 22?" or "34 + 22" or "what is -3.5 plus 2.1?"
+  if (
+    /\b(plus|\+|add|sum of)\b/i.test(query)
+  ) {
+    // Try to capture two operands around "plus" or the plus sign
+    const twoOpRegex = /(-?\d+(\.\d+)?)\s*(?:\+|plus|add|sum of)\s*(-?\d+(\.\d+)?)/i;
+    const twoMatch = query.match(twoOpRegex);
+    if (twoMatch) {
+      const a = Number(twoMatch[1]);
+      const b = Number(twoMatch[3]);
+      if (!Number.isNaN(a) && !Number.isNaN(b)) {
+        const sum = a + b;
+        return Number.isInteger(sum) ? String(Math.trunc(sum)) : String(sum);
+      }
+    }
+
+    // Fallback: extract all numbers and sum them (useful for "sum of 1, 2, and 3")
+    const allMatches = query.match(/-?\d+(\.\d+)?/g);
+    if (allMatches && allMatches.length > 0) {
+      const nums = allMatches.map((s) => Number(s)).filter((n) => !Number.isNaN(n));
+      if (nums.length > 0) {
+        const total = nums.reduce((acc, n) => acc + n, 0);
+        return Number.isInteger(total) ? String(Math.trunc(total)) : String(total);
+      }
+    }
+
+    return "";
+  }
+
+  return "";
 }
